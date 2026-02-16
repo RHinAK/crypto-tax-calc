@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Tax Calculator — Free Capital Gains Tool</title>
-    <meta name="description" content="Calculate crypto capital gains and losses for tax reporting. FIFO, LIFO, HIFO methods. Free tool by StackStats Apps.">
+    <title>Crypto Tax Calculator — Free Capital Gains + Wash Sale Tool</title>
+    <meta name="description" content="Calculate crypto capital gains, losses, and wash sale opportunities. FIFO, LIFO, HIFO methods. Wash sales still legal for crypto in 2026. Free tool by StackStats Apps.">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -21,8 +21,19 @@
 
     <div class="max-w-5xl mx-auto px-4 py-8">
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-white mb-2">Crypto Capital Gains Calculator</h1>
-            <p class="text-gray-400 text-sm">Add your buy and sell transactions. We'll calculate your gains, losses, and tax liability.</p>
+            <h1 class="text-2xl font-bold text-white mb-2">Crypto Capital Gains & Wash Sale Calculator</h1>
+            <p class="text-gray-400 text-sm">Calculate gains, losses, and <span class="text-emerald-400">wash sale opportunities</span> — still legal for crypto.</p>
+        </div>
+
+        <!-- Wash Sale Info Banner -->
+        <div class="bg-emerald-900/20 border border-emerald-800/40 rounded-xl p-4 mb-6">
+            <div class="flex gap-3">
+                <span class="text-emerald-400 text-lg">💡</span>
+                <div>
+                    <p class="text-sm text-emerald-300 font-medium">Crypto Wash Sales Are Still Legal</p>
+                    <p class="text-xs text-gray-400 mt-1">Unlike stocks, the IRS wash sale rule (Section 1091) does <strong class="text-white">not</strong> apply to cryptocurrency as of 2026. You can sell crypto at a loss and immediately rebuy to harvest the tax loss while maintaining your position. This calculator detects wash sale opportunities in your transactions.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Settings -->
@@ -92,7 +103,7 @@
             <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center">
                 <h2 class="text-sm font-semibold text-gray-400">Transactions</h2>
                 <div class="flex gap-2">
-                    <button onclick="loadSample()" class="text-xs text-indigo-400 hover:underline">Load Sample Data</button>
+                    <button onclick="loadSample()" class="text-xs text-indigo-400 hover:underline">Load Sample (with Wash Sales)</button>
                     <button onclick="clearAll()" class="text-xs text-red-400 hover:underline">Clear All</button>
                 </div>
             </div>
@@ -114,9 +125,9 @@
             </div>
         </div>
 
-        <!-- Results -->
+        <!-- Results Summary -->
         <div id="results" class="hidden">
-            <div class="grid md:grid-cols-4 gap-4 mb-6">
+            <div class="grid md:grid-cols-5 gap-4 mb-6">
                 <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
                     <div class="text-xs text-gray-500 mb-1">Short-Term Gains</div>
                     <div id="stGains" class="text-xl font-bold">$0</div>
@@ -133,9 +144,52 @@
                     <div class="text-xs text-gray-500 mb-1">Est. Tax Liability</div>
                     <div id="taxLiability" class="text-xl font-bold text-red-400">$0</div>
                 </div>
+                <div class="bg-gray-900 rounded-xl border border-emerald-800/40 p-4 text-center">
+                    <div class="text-xs text-emerald-400 mb-1">Wash Sale Savings</div>
+                    <div id="washSavings" class="text-xl font-bold text-emerald-400">$0</div>
+                </div>
             </div>
 
-            <!-- Detailed Dispositions -->
+            <!-- Wash Sale Detection -->
+            <div id="washSaleSection" class="hidden mb-6">
+                <div class="bg-gray-900 rounded-xl border border-emerald-800/40 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-emerald-800/30 bg-emerald-900/10">
+                        <h2 class="text-sm font-semibold text-emerald-400">🔄 Wash Sales Detected</h2>
+                        <p class="text-xs text-gray-500 mt-1">These sell→rebuy pairs harvested losses while maintaining your position. Legal for crypto — not subject to IRS Section 1091.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                            <thead class="text-gray-500 bg-gray-900/50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Asset</th>
+                                    <th class="px-3 py-2 text-left">Sold</th>
+                                    <th class="px-3 py-2 text-left">Rebought</th>
+                                    <th class="px-3 py-2 text-right">Amount</th>
+                                    <th class="px-3 py-2 text-right">Sell Price</th>
+                                    <th class="px-3 py-2 text-right">Rebuy Price</th>
+                                    <th class="px-3 py-2 text-right">Loss Harvested</th>
+                                    <th class="px-3 py-2 text-right">Tax Saved</th>
+                                    <th class="px-3 py-2 text-right">Gap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="washTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wash Sale Opportunities -->
+            <div id="washOpportunities" class="hidden mb-6">
+                <div class="bg-gray-900 rounded-xl border border-amber-800/40 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-amber-800/30 bg-amber-900/10">
+                        <h2 class="text-sm font-semibold text-amber-400">💰 Potential Wash Sale Opportunities</h2>
+                        <p class="text-xs text-gray-500 mt-1">Unrealized losses in your remaining holdings that could be harvested via sell→immediate rebuy.</p>
+                    </div>
+                    <div id="washOppContent" class="p-4"></div>
+                </div>
+            </div>
+
+            <!-- Capital Gains Detail -->
             <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-6">
                 <div class="px-4 py-3 border-b border-gray-800">
                     <h2 class="text-sm font-semibold text-gray-400">Capital Gains Detail (IRS Form 8949)</h2>
@@ -152,6 +206,7 @@
                                 <th class="px-3 py-2 text-right">Proceeds</th>
                                 <th class="px-3 py-2 text-right">Gain/Loss</th>
                                 <th class="px-3 py-2 text-left">Type</th>
+                                <th class="px-3 py-2 text-left">Wash?</th>
                             </tr>
                         </thead>
                         <tbody id="gainsTable"></tbody>
@@ -159,10 +214,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Educational Section -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Understanding Crypto Wash Sales</h2>
+            <div class="grid md:grid-cols-2 gap-6 text-sm text-gray-400">
+                <div>
+                    <h3 class="font-medium text-white mb-2">What Is a Wash Sale?</h3>
+                    <p>A wash sale occurs when you sell an asset at a loss and repurchase the same or "substantially identical" asset within 30 days. For <strong class="text-white">stocks and securities</strong>, IRS Section 1091 disallows the loss deduction.</p>
+                    <p class="mt-2">For <strong class="text-emerald-400">cryptocurrency</strong>, the wash sale rule does <strong class="text-white">not currently apply</strong>. The IRS classifies crypto as property, not a security, so Section 1091 doesn't cover it.</p>
+                </div>
+                <div>
+                    <h3 class="font-medium text-white mb-2">How to Use This Strategy</h3>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>Identify crypto positions with unrealized losses</li>
+                        <li>Sell the position to realize the loss</li>
+                        <li>Immediately repurchase the same crypto</li>
+                        <li>Deduct the loss on your tax return</li>
+                        <li>Your position size stays the same — only your cost basis resets</li>
+                    </ol>
+                    <p class="mt-2 text-xs text-amber-400">⚠️ Congress may close this loophole. Monitor IRS guidance and proposed legislation.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <footer class="py-6 px-4 border-t border-gray-800/50 text-center text-xs text-gray-600">
-        © 2026 <a href="https://stackstatsapps.com" class="hover:text-gray-400">StackStats Apps LLC</a> · Not tax advice. Consult a qualified tax professional.
+        © 2026 <a href="https://stackstatsapps.com" class="hover:text-gray-400">StackStats Apps LLC</a> · Not tax advice. Consult a qualified tax professional. · <a href="https://rhinak.github.io/crypto-tax-calc/" class="hover:text-gray-400">Crypto Tax Calculator</a>
     </footer>
 
     <script>
@@ -194,12 +272,18 @@
 
     function loadSample() {
         transactions = [
+            // Initial accumulation
             { id: 1, type: 'buy', asset: 'XRP', amount: 10000, price: 0.50, date: '2024-03-15' },
             { id: 2, type: 'buy', asset: 'XRP', amount: 15000, price: 0.55, date: '2024-06-20' },
             { id: 3, type: 'buy', asset: 'XRP', amount: 20000, price: 0.48, date: '2024-11-10' },
+            // Profitable sell
             { id: 4, type: 'sell', asset: 'XRP', amount: 5000, price: 2.40, date: '2025-01-15' },
-            { id: 5, type: 'sell', asset: 'XRP', amount: 8000, price: 2.80, date: '2025-12-01' },
-            { id: 6, type: 'buy', asset: 'XRP', amount: 5000, price: 2.20, date: '2025-09-01' },
+            // Wash sale: sell at loss then rebuy immediately
+            { id: 5, type: 'buy', asset: 'XRP', amount: 10000, price: 3.00, date: '2025-05-01' },
+            { id: 6, type: 'sell', asset: 'XRP', amount: 10000, price: 2.20, date: '2025-07-15' },  // Loss of $0.80/token
+            { id: 7, type: 'buy', asset: 'XRP', amount: 10000, price: 2.25, date: '2025-07-15' },   // Immediate rebuy — wash sale!
+            // Another profitable exit
+            { id: 8, type: 'sell', asset: 'XRP', amount: 8000, price: 2.80, date: '2025-12-01' },
         ]
         render()
     }
@@ -233,12 +317,10 @@
 
         for (const sell of sells) {
             let remaining = sell.amount
-            // Sort available buys by method
             let available = buys.filter(b => b.remaining > 0 && b.asset === sell.asset && new Date(b.date) <= new Date(sell.date))
             
             if (method === 'lifo') available.sort((a, b) => new Date(b.date) - new Date(a.date))
             else if (method === 'hifo') available.sort((a, b) => b.price - a.price)
-            // fifo is default (already sorted by date)
 
             for (const buy of available) {
                 if (remaining <= 0) break
@@ -258,13 +340,51 @@
                     proceeds,
                     gain,
                     type: isLongTerm ? 'Long-term' : 'Short-term',
+                    sellPrice: sell.price,
+                    buyPrice: buy.price,
                 })
                 buy.remaining -= used
                 remaining -= used
             }
         }
 
-        if (dispositions.length === 0) {
+        // Detect wash sales: sell at a loss with a buy of the same asset within 30 days
+        const washSales = []
+        for (const disp of dispositions) {
+            if (disp.gain >= 0) continue // Only losses
+            const sellDate = new Date(disp.sold)
+            // Look for buys within 30 days before or after the sale
+            const nearbyBuys = sorted.filter(t => {
+                if (t.type !== 'buy' || t.asset !== disp.asset) return false
+                const buyDate = new Date(t.date)
+                const daysDiff = Math.abs((buyDate - sellDate) / (1000 * 60 * 60 * 24))
+                return daysDiff <= 30 && buyDate >= sellDate // rebuy after sell
+            })
+            for (const rebuy of nearbyBuys) {
+                const washAmount = Math.min(disp.amount, rebuy.amount)
+                const lossHarvested = Math.abs(disp.gain) * (washAmount / disp.amount)
+                const gapDays = Math.round((new Date(rebuy.date) - sellDate) / (1000 * 60 * 60 * 24))
+                const taxSaved = lossHarvested * stRate // Assume short-term rate for savings calc
+                washSales.push({
+                    asset: disp.asset,
+                    sold: disp.sold,
+                    rebought: rebuy.date,
+                    amount: washAmount,
+                    sellPrice: disp.sellPrice,
+                    rebuyPrice: rebuy.price,
+                    lossHarvested,
+                    taxSaved,
+                    gapDays,
+                })
+            }
+            // Mark the disposition
+            disp.isWashSale = nearbyBuys.length > 0
+        }
+
+        // Calculate unrealized loss opportunities (remaining buys vs current-ish price)
+        const remainingBuys = buys.filter(b => b.remaining > 0)
+
+        if (dispositions.length === 0 && remainingBuys.length === 0) {
             document.getElementById('results').classList.add('hidden')
             return
         }
@@ -275,6 +395,7 @@
         const ltTotal = dispositions.filter(d => d.type === 'Long-term').reduce((s, d) => s + d.gain, 0)
         const total = stTotal + ltTotal
         const tax = Math.max(0, stTotal) * stRate + Math.max(0, ltTotal) * ltRate
+        const totalWashSavings = washSales.reduce((s, w) => s + w.taxSaved, 0)
 
         const fmt = (n) => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString(undefined, {maximumFractionDigits: 2})
         const color = (n) => n >= 0 ? 'text-green-400' : 'text-red-400'
@@ -286,7 +407,67 @@
         document.getElementById('totalGain').textContent = fmt(total)
         document.getElementById('totalGain').className = 'text-xl font-bold ' + color(total)
         document.getElementById('taxLiability').textContent = fmt(tax)
+        document.getElementById('washSavings').textContent = fmt(totalWashSavings)
 
+        // Wash sales table
+        if (washSales.length > 0) {
+            document.getElementById('washSaleSection').classList.remove('hidden')
+            document.getElementById('washTable').innerHTML = washSales.map(w => `
+                <tr class="border-t border-emerald-800/20">
+                    <td class="px-3 py-2 font-medium">${w.asset}</td>
+                    <td class="px-3 py-2">${w.sold}</td>
+                    <td class="px-3 py-2">${w.rebought}</td>
+                    <td class="px-3 py-2 text-right">${w.amount.toLocaleString()}</td>
+                    <td class="px-3 py-2 text-right">$${w.sellPrice.toFixed(4)}</td>
+                    <td class="px-3 py-2 text-right">$${w.rebuyPrice.toFixed(4)}</td>
+                    <td class="px-3 py-2 text-right text-emerald-400">${fmt(w.lossHarvested)}</td>
+                    <td class="px-3 py-2 text-right text-emerald-400">${fmt(w.taxSaved)}</td>
+                    <td class="px-3 py-2 text-right">${w.gapDays}d</td>
+                </tr>
+            `).join('')
+        } else {
+            document.getElementById('washSaleSection').classList.add('hidden')
+        }
+
+        // Wash sale opportunities (unrealized losses in remaining holdings)
+        if (remainingBuys.length > 0 && sells.length > 0) {
+            const lastSellPrice = {}
+            sells.forEach(s => { lastSellPrice[s.asset] = s.price })
+            const opportunities = remainingBuys.filter(b => {
+                const currentPrice = lastSellPrice[b.asset]
+                return currentPrice && currentPrice < b.price
+            }).map(b => {
+                const currentPrice = lastSellPrice[b.asset]
+                const unrealizedLoss = (currentPrice - b.price) * b.remaining
+                return { asset: b.asset, amount: b.remaining, boughtAt: b.price, currentPrice, unrealizedLoss, date: b.date }
+            })
+
+            if (opportunities.length > 0) {
+                document.getElementById('washOpportunities').classList.remove('hidden')
+                document.getElementById('washOppContent').innerHTML = `
+                    <div class="space-y-2">
+                        ${opportunities.map(o => `
+                            <div class="flex justify-between items-center text-sm bg-amber-900/10 rounded-lg p-3">
+                                <div>
+                                    <span class="font-medium text-white">${o.amount.toLocaleString()} ${o.asset}</span>
+                                    <span class="text-gray-500"> bought ${o.date} @ $${o.boughtAt.toFixed(4)}</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-red-400">${fmt(o.unrealizedLoss)} unrealized loss</div>
+                                    <div class="text-xs text-amber-400">Sell → rebuy to harvest ${fmt(Math.abs(o.unrealizedLoss) * stRate)} in tax savings</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `
+            } else {
+                document.getElementById('washOpportunities').classList.add('hidden')
+            }
+        } else {
+            document.getElementById('washOpportunities').classList.add('hidden')
+        }
+
+        // Gains detail table
         document.getElementById('gainsTable').innerHTML = dispositions.map(d => `
             <tr class="border-t border-gray-800/50">
                 <td class="px-3 py-2 font-medium">${d.asset}</td>
@@ -297,6 +478,7 @@
                 <td class="px-3 py-2 text-right">$${d.proceeds.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right ${d.gain >= 0 ? 'text-green-400' : 'text-red-400'}">${fmt(d.gain)}</td>
                 <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${d.type === 'Long-term' ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400'}">${d.type}</span></td>
+                <td class="px-3 py-2">${d.isWashSale ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">🔄 WASH</span>' : ''}</td>
             </tr>
         `).join('')
     }
