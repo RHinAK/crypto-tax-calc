@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Tax Calculator — Free Capital Gains Tool</title>
+    <meta name="description" content="Calculate crypto capital gains and losses for tax reporting. FIFO, LIFO, HIFO methods. Free tool by StackStats Apps.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-200 min-h-screen">
+    <nav class="border-b border-gray-800/50">
+        <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+            <span class="font-bold text-white">📊 Crypto Tax Calculator</span>
+            <a href="https://stackstatsapps.com" class="text-xs text-gray-500 hover:text-gray-300">by StackStats Apps</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-white mb-2">Crypto Capital Gains Calculator</h1>
+            <p class="text-gray-400 text-sm">Add your buy and sell transactions. We'll calculate your gains, losses, and tax liability.</p>
+        </div>
+
+        <!-- Settings -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-6 flex flex-wrap gap-4 items-center">
+            <div>
+                <label class="text-xs text-gray-500">Cost Basis Method</label>
+                <select id="method" class="bg-gray-800 rounded-lg px-3 py-1.5 text-sm ml-2">
+                    <option value="fifo">FIFO (First In, First Out)</option>
+                    <option value="lifo">LIFO (Last In, First Out)</option>
+                    <option value="hifo">HIFO (Highest In, First Out)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500">Tax Year</label>
+                <select id="taxYear" class="bg-gray-800 rounded-lg px-3 py-1.5 text-sm ml-2">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500">Short-Term Rate</label>
+                <input id="stRate" type="number" value="24" class="bg-gray-800 rounded-lg px-3 py-1.5 text-sm w-16 ml-1">
+                <span class="text-xs text-gray-500">%</span>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500">Long-Term Rate</label>
+                <input id="ltRate" type="number" value="15" class="bg-gray-800 rounded-lg px-3 py-1.5 text-sm w-16 ml-1">
+                <span class="text-xs text-gray-500">%</span>
+            </div>
+        </div>
+
+        <!-- Add Transaction -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-6">
+            <h2 class="text-sm font-semibold text-gray-400 mb-3">Add Transaction</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div>
+                    <label class="text-xs text-gray-500">Type</label>
+                    <select id="txType" class="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm mt-1">
+                        <option value="buy">Buy</option>
+                        <option value="sell">Sell</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Asset</label>
+                    <input id="txAsset" type="text" value="XRP" class="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm mt-1">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Amount</label>
+                    <input id="txAmount" type="number" step="any" class="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm mt-1" placeholder="1000">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Price (USD)</label>
+                    <input id="txPrice" type="number" step="any" class="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm mt-1" placeholder="0.50">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Date</label>
+                    <input id="txDate" type="date" class="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm mt-1">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="addTransaction()" class="w-full bg-indigo-600 hover:bg-indigo-700 rounded-lg px-4 py-2 text-sm font-semibold transition">+ Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-6">
+            <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="text-sm font-semibold text-gray-400">Transactions</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadSample()" class="text-xs text-indigo-400 hover:underline">Load Sample Data</button>
+                    <button onclick="clearAll()" class="text-xs text-red-400 hover:underline">Clear All</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-xs text-gray-500 bg-gray-900/50">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Date</th>
+                            <th class="px-4 py-2 text-left">Type</th>
+                            <th class="px-4 py-2 text-left">Asset</th>
+                            <th class="px-4 py-2 text-right">Amount</th>
+                            <th class="px-4 py-2 text-right">Price</th>
+                            <th class="px-4 py-2 text-right">Total</th>
+                            <th class="px-4 py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden">
+            <div class="grid md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">Short-Term Gains</div>
+                    <div id="stGains" class="text-xl font-bold">$0</div>
+                </div>
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">Long-Term Gains</div>
+                    <div id="ltGains" class="text-xl font-bold">$0</div>
+                </div>
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">Total Net Gain/Loss</div>
+                    <div id="totalGain" class="text-xl font-bold">$0</div>
+                </div>
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">Est. Tax Liability</div>
+                    <div id="taxLiability" class="text-xl font-bold text-red-400">$0</div>
+                </div>
+            </div>
+
+            <!-- Detailed Dispositions -->
+            <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-6">
+                <div class="px-4 py-3 border-b border-gray-800">
+                    <h2 class="text-sm font-semibold text-gray-400">Capital Gains Detail (IRS Form 8949)</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="text-gray-500 bg-gray-900/50">
+                            <tr>
+                                <th class="px-3 py-2 text-left">Asset</th>
+                                <th class="px-3 py-2 text-left">Acquired</th>
+                                <th class="px-3 py-2 text-left">Sold</th>
+                                <th class="px-3 py-2 text-right">Amount</th>
+                                <th class="px-3 py-2 text-right">Cost Basis</th>
+                                <th class="px-3 py-2 text-right">Proceeds</th>
+                                <th class="px-3 py-2 text-right">Gain/Loss</th>
+                                <th class="px-3 py-2 text-left">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gainsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-6 px-4 border-t border-gray-800/50 text-center text-xs text-gray-600">
+        © 2026 <a href="https://stackstatsapps.com" class="hover:text-gray-400">StackStats Apps LLC</a> · Not tax advice. Consult a qualified tax professional.
+    </footer>
+
+    <script>
+    let transactions = []
+
+    function addTransaction() {
+        const tx = {
+            id: Date.now(),
+            type: document.getElementById('txType').value,
+            asset: document.getElementById('txAsset').value.toUpperCase(),
+            amount: parseFloat(document.getElementById('txAmount').value),
+            price: parseFloat(document.getElementById('txPrice').value),
+            date: document.getElementById('txDate').value,
+        }
+        if (!tx.amount || !tx.price || !tx.date) return alert('Fill in all fields')
+        transactions.push(tx)
+        render()
+    }
+
+    function removeTx(id) {
+        transactions = transactions.filter(t => t.id !== id)
+        render()
+    }
+
+    function clearAll() {
+        transactions = []
+        render()
+    }
+
+    function loadSample() {
+        transactions = [
+            { id: 1, type: 'buy', asset: 'XRP', amount: 10000, price: 0.50, date: '2024-03-15' },
+            { id: 2, type: 'buy', asset: 'XRP', amount: 15000, price: 0.55, date: '2024-06-20' },
+            { id: 3, type: 'buy', asset: 'XRP', amount: 20000, price: 0.48, date: '2024-11-10' },
+            { id: 4, type: 'sell', asset: 'XRP', amount: 5000, price: 2.40, date: '2025-01-15' },
+            { id: 5, type: 'sell', asset: 'XRP', amount: 8000, price: 2.80, date: '2025-12-01' },
+            { id: 6, type: 'buy', asset: 'XRP', amount: 5000, price: 2.20, date: '2025-09-01' },
+        ]
+        render()
+    }
+
+    function render() {
+        const tbody = document.getElementById('txTable')
+        const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
+        tbody.innerHTML = sorted.map(tx => `
+            <tr class="border-t border-gray-800/50 hover:bg-gray-800/30">
+                <td class="px-4 py-2">${tx.date}</td>
+                <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs ${tx.type === 'buy' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${tx.type.toUpperCase()}</span></td>
+                <td class="px-4 py-2 font-medium">${tx.asset}</td>
+                <td class="px-4 py-2 text-right">${tx.amount.toLocaleString()}</td>
+                <td class="px-4 py-2 text-right">$${tx.price.toFixed(4)}</td>
+                <td class="px-4 py-2 text-right">$${(tx.amount * tx.price).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+                <td class="px-4 py-2 text-right"><button onclick="removeTx(${tx.id})" class="text-gray-500 hover:text-red-400">✕</button></td>
+            </tr>
+        `).join('')
+        calculate()
+    }
+
+    function calculate() {
+        const method = document.getElementById('method').value
+        const stRate = parseFloat(document.getElementById('stRate').value) / 100
+        const ltRate = parseFloat(document.getElementById('ltRate').value) / 100
+        const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
+        
+        const buys = sorted.filter(t => t.type === 'buy').map(t => ({ ...t, remaining: t.amount }))
+        const sells = sorted.filter(t => t.type === 'sell')
+        const dispositions = []
+
+        for (const sell of sells) {
+            let remaining = sell.amount
+            // Sort available buys by method
+            let available = buys.filter(b => b.remaining > 0 && b.asset === sell.asset && new Date(b.date) <= new Date(sell.date))
+            
+            if (method === 'lifo') available.sort((a, b) => new Date(b.date) - new Date(a.date))
+            else if (method === 'hifo') available.sort((a, b) => b.price - a.price)
+            // fifo is default (already sorted by date)
+
+            for (const buy of available) {
+                if (remaining <= 0) break
+                const used = Math.min(remaining, buy.remaining)
+                const costBasis = used * buy.price
+                const proceeds = used * sell.price
+                const gain = proceeds - costBasis
+                const holdDays = (new Date(sell.date) - new Date(buy.date)) / (1000 * 60 * 60 * 24)
+                const isLongTerm = holdDays > 365
+
+                dispositions.push({
+                    asset: sell.asset,
+                    acquired: buy.date,
+                    sold: sell.date,
+                    amount: used,
+                    costBasis,
+                    proceeds,
+                    gain,
+                    type: isLongTerm ? 'Long-term' : 'Short-term',
+                })
+                buy.remaining -= used
+                remaining -= used
+            }
+        }
+
+        if (dispositions.length === 0) {
+            document.getElementById('results').classList.add('hidden')
+            return
+        }
+
+        document.getElementById('results').classList.remove('hidden')
+
+        const stTotal = dispositions.filter(d => d.type === 'Short-term').reduce((s, d) => s + d.gain, 0)
+        const ltTotal = dispositions.filter(d => d.type === 'Long-term').reduce((s, d) => s + d.gain, 0)
+        const total = stTotal + ltTotal
+        const tax = Math.max(0, stTotal) * stRate + Math.max(0, ltTotal) * ltRate
+
+        const fmt = (n) => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString(undefined, {maximumFractionDigits: 2})
+        const color = (n) => n >= 0 ? 'text-green-400' : 'text-red-400'
+
+        document.getElementById('stGains').textContent = fmt(stTotal)
+        document.getElementById('stGains').className = 'text-xl font-bold ' + color(stTotal)
+        document.getElementById('ltGains').textContent = fmt(ltTotal)
+        document.getElementById('ltGains').className = 'text-xl font-bold ' + color(ltTotal)
+        document.getElementById('totalGain').textContent = fmt(total)
+        document.getElementById('totalGain').className = 'text-xl font-bold ' + color(total)
+        document.getElementById('taxLiability').textContent = fmt(tax)
+
+        document.getElementById('gainsTable').innerHTML = dispositions.map(d => `
+            <tr class="border-t border-gray-800/50">
+                <td class="px-3 py-2 font-medium">${d.asset}</td>
+                <td class="px-3 py-2">${d.acquired}</td>
+                <td class="px-3 py-2">${d.sold}</td>
+                <td class="px-3 py-2 text-right">${d.amount.toLocaleString()}</td>
+                <td class="px-3 py-2 text-right">$${d.costBasis.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right">$${d.proceeds.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right ${d.gain >= 0 ? 'text-green-400' : 'text-red-400'}">${fmt(d.gain)}</td>
+                <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${d.type === 'Long-term' ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400'}">${d.type}</span></td>
+            </tr>
+        `).join('')
+    }
+
+    // Auto-recalculate on settings change
+    document.getElementById('method').onchange = calculate
+    document.getElementById('stRate').onchange = calculate
+    document.getElementById('ltRate').onchange = calculate
+
+    // Set default date to today
+    document.getElementById('txDate').value = new Date().toISOString().split('T')[0]
+    </script>
+</body>
+</html>
